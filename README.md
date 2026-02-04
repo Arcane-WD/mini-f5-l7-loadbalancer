@@ -178,5 +178,3 @@ This project provides hands-on proof of how enterprise-grade ADCs such as **F5 B
 It demonstrates practical understanding of real-world traffic management in distributed systems.
 
 ---
-
-When you’re ready, we can push this to GitHub and you’ll have one of the strongest networking projects any fresher can show.
