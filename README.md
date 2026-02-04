@@ -1,7 +1,8 @@
 # Mini F5 – Layer-7 Load Balancer
 
 This project implements a minimal **Application Delivery Controller (ADC)** using **NGINX** as a Layer-7 reverse proxy and multiple **FastAPI** backend services.
-It demonstrates how modern load balancers such as **F5 BIG-IP LTM** distribute traffic, monitor health, and proxy application requests in real-world microservice environments.
+
+It models the core behavior of enterprise ADCs such as **F5 BIG-IP LTM**, including load-balancing, session persistence, and health-based failover.
 
 ---
 
@@ -18,28 +19,54 @@ NGINX (Layer-7 Reverse Proxy / ADC)
    +── backend3 (FastAPI)
 ```
 
-NGINX acts as the **virtual server** and load-balancer.
+NGINX acts as the **virtual server (VIP)** and **traffic manager**.
 FastAPI containers act as **pool members**.
 
-All traffic enters through NGINX and is forwarded to one of the backend services.
+All traffic enters through NGINX and is forwarded to a selected backend.
 
 ---
 
-## Features Implemented
+## Implemented ADC Features
 
 * Layer-7 reverse proxy (NGINX)
 * Round-robin load balancing
-* Multiple backend pool members
+* Backend pool with multiple members
+* Cookie-based session persistence (NAT-safe)
+* Health-based backend failover
 * Per-backend request counters
-* Health check endpoint (`/health`)
-* Fully containerized using Docker
+* HTTP health endpoint (`/health`)
+* Fully containerized
 * Single-command startup using Docker Compose
+
+---
+
+## How Session Persistence Works
+
+Each client receives a cookie (`SERVERID`) on their first request.
+NGINX hashes this cookie and uses it to consistently route that client to the same backend on subsequent requests.
+
+This is equivalent to **F5 cookie persistence profiles** used to maintain login sessions, carts, and application state.
+
+---
+
+## Health Monitoring and Failover
+
+Each backend exposes:
+
+```
+GET /health
+```
+
+NGINX continuously monitors backend availability.
+If a backend stops responding, it is temporarily removed from the pool and traffic is automatically re-routed to healthy servers.
+
+This simulates **F5 LTM pool member health checks and failover behavior**.
 
 ---
 
 ## Technology Stack
 
-* NGINX (reverse proxy and load balancer)
+* NGINX (Layer-7 reverse proxy and load balancer)
 * FastAPI (backend services)
 * Docker
 * Docker Compose
@@ -54,7 +81,7 @@ Each backend instance returns:
 * A request counter
 * A simple response message
 
-This makes it easy to observe which backend handled each request.
+This allows real-time observation of how traffic is distributed and persisted.
 
 ---
 
@@ -67,20 +94,20 @@ cd backends
 docker build -t fastapi-backend .
 ```
 
-Start the full system:
+Start the full ADC system:
 
 ```bash
 cd ..
 docker compose up
 ```
 
-Access the load balancer:
+Access the virtual server:
 
 ```
 http://localhost
 ```
 
-Every request is routed through NGINX and forwarded to one of the backend services.
+All requests flow through NGINX and are forwarded to one of the backend services.
 
 ---
 
@@ -94,7 +121,30 @@ curl http://localhost
 curl http://localhost
 ```
 
-The `hostname` field in the response should rotate between backend containers.
+The `hostname` field will rotate across backend containers.
+
+---
+
+## Verifying Persistence
+
+Open in a browser and refresh multiple times — the backend will remain the same.
+Open in an incognito window — a different backend will be selected.
+
+This demonstrates cookie-based session persistence.
+
+---
+
+## Verifying Failover
+
+Stop a backend:
+
+```bash
+docker stop backend1
+```
+
+Within a short interval, traffic will be automatically routed to another backend.
+
+This demonstrates health-based failover.
 
 ---
 
@@ -116,11 +166,17 @@ mini-f5-l7-loadbalancer/
 
 ## Why This Project Exists
 
-This project demonstrates, in a minimal and reproducible way, how enterprise-grade ADCs such as **F5 BIG-IP LTM** operate:
+This project provides hands-on proof of how enterprise-grade ADCs such as **F5 BIG-IP LTM** operate:
 
 * Virtual servers
 * Backend pools
 * Load-balancing algorithms
-* Layer-7 request proxying
+* Session persistence
+* Health monitoring and failover
+* Layer-7 traffic proxying
 
-It provides hands-on evidence of understanding how production traffic is routed in modern distributed systems.
+It demonstrates practical understanding of real-world traffic management in distributed systems.
+
+---
+
+When you’re ready, we can push this to GitHub and you’ll have one of the strongest networking projects any fresher can show.
